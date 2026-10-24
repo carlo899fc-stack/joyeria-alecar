@@ -1,0 +1,2152 @@
+html
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joyería Alecar | Sistema Integral de Gestión</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js para Estadísticas -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS para Exportar a Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            alecar: {
+              black: '#080808',
+              surface: '#121212',
+              card: '#181818',
+              border: '#2A261D',
+              gold: '#D4AF37',
+              goldHover: '#B89628',
+              goldLight: '#F3E5AB',
+              goldDark: '#8C6F1E'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .font-brand { font-family: 'Cinzel', serif; }
+    
+    /* Scrollbar dorada */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c0c0c; }
+    ::-webkit-scrollbar-thumb { background: #3b331f; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #d4af37; }
+
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #AA7C11 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .gold-gradient-bg {
+      background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #AA7C11 100%);
+    }
+    .gold-border-glow {
+      border: 1px solid #d4af3740;
+      box-shadow: 0 0 15px -3px rgba(212, 175, 55, 0.15);
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-alecar-black text-gray-200 min-h-screen flex flex-col antialiased selection:bg-alecar-gold selection:text-black">
+
+  <!-- TOPBAR -->
+  <header class="bg-alecar-surface border-b border-alecar-border sticky top-0 z-40 px-4 lg:px-8 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full border border-alecar-gold flex items-center justify-center bg-black/60 shadow-lg shadow-alecar-gold/10">
+        <i data-lucide="gem" class="w-5 h-5 text-alecar-gold"></i>
+      </div>
+      <div>
+        <h1 class="font-brand font-bold text-xl tracking-wider gold-gradient-text">JOYERÍA ALECAR</h1>
+        <p class="text-[10px] uppercase tracking-widest text-alecar-goldLight/70">Oro 18K & Tejido Artesanal</p>
+      </div>
+    </div>
+
+    <!-- Active User & Role -->
+    <div class="flex items-center gap-4">
+      <div class="hidden sm:flex flex-col text-right">
+        <span id="header-user-name" class="text-sm font-semibold text-gray-200">Admin Alecar</span>
+        <span id="header-user-role" class="text-xs text-alecar-gold">Administrador Master</span>
+      </div>
+      <button onclick="openModal('modal-auth')" title="Cambiar Usuario / Rol" class="p-2 rounded-lg bg-alecar-card border border-alecar-border hover:border-alecar-gold text-alecar-gold transition">
+        <i data-lucide="user-check" class="w-5 h-5"></i>
+      </button>
+      <button onclick="exportFullBackup()" title="Descargar Copia de Seguridad" class="p-2 rounded-lg bg-alecar-card border border-alecar-border hover:border-alecar-gold text-gray-300 hover:text-alecar-gold transition">
+        <i data-lucide="hard-drive-download" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- SIDEBAR NAV -->
+    <aside class="w-64 bg-alecar-surface/90 border-r border-alecar-border flex flex-col justify-between shrink-0 hidden md:flex">
+      <nav class="p-4 space-y-1.5 text-sm overflow-y-auto">
+        <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-alecar-gold bg-alecar-gold/10 border border-alecar-gold/30">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+        </button>
+        <button onclick="navigate('inventory')" id="nav-inventory" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-gray-400 hover:text-gray-200 hover:bg-alecar-card">
+          <i data-lucide="boxes" class="w-5 h-5"></i> Inventario / Stock
+        </button>
+        <button onclick="navigate('sales')" id="nav-sales" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-gray-400 hover:text-gray-200 hover:bg-alecar-card">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i> Ventas & Cotizar
+        </button>
+        <button onclick="navigate('credits')" id="nav-credits" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-gray-400 hover:text-gray-200 hover:bg-alecar-card">
+          <i data-lucide="credit-card" class="w-5 h-5"></i> Créditos & Abonos
+        </button>
+        <button onclick="navigate('costs')" id="nav-costs" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-gray-400 hover:text-gray-200 hover:bg-alecar-card">
+          <i data-lucide="sliders" class="w-5 h-5"></i> Costos Operativos
+        </button>
+        <button onclick="navigate('reports')" id="nav-reports" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-gray-400 hover:text-gray-200 hover:bg-alecar-card">
+          <i data-lucide="file-spreadsheet" class="w-5 h-5"></i> Reportes
+        </button>
+        <button onclick="navigate('logs')" id="nav-logs" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-gray-400 hover:text-gray-200 hover:bg-alecar-card">
+          <i data-lucide="shield-check" class="w-5 h-5"></i> Seguridad & Logs
+        </button>
+      </nav>
+      <div class="p-4 border-t border-alecar-border text-center">
+        <p class="text-[11px] text-gray-500 font-mono">v2.5 Gold Edition</p>
+      </div>
+    </aside>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8 bg-alecar-black/60 relative">
+
+      <!-- ================= 1. DASHBOARD ================= -->
+      <section id="view-dashboard" class="space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2 font-brand">
+              <i data-lucide="trending-up" class="text-alecar-gold w-6 h-6"></i> Panel de Control Ejecutivo
+            </h2>
+            <p class="text-sm text-gray-400">Rendimiento financiero y métricas de inventario en tiempo real.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sistema en línea
+            </span>
+          </div>
+        </div>
+
+        <!-- KPI GRID -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Ventas Hoy -->
+          <div class="bg-alecar-card border border-alecar-border rounded-2xl p-5 hover:border-alecar-gold/50 transition">
+            <div class="flex justify-between items-center text-gray-400 mb-2">
+              <span class="text-xs uppercase tracking-wider font-semibold">Ventas del Día</span>
+              <i data-lucide="dollar-sign" class="w-4 h-4 text-alecar-gold"></i>
+            </div>
+            <div id="kpi-sales-day" class="text-2xl font-bold text-white">$ 0</div>
+            <div id="kpi-profit-day" class="text-xs text-emerald-400 mt-1">Ganancia: $ 0</div>
+          </div>
+          <!-- Ventas Mes -->
+          <div class="bg-alecar-card border border-alecar-border rounded-2xl p-5 hover:border-alecar-gold/50 transition">
+            <div class="flex justify-between items-center text-gray-400 mb-2">
+              <span class="text-xs uppercase tracking-wider font-semibold">Ventas del Mes</span>
+              <i data-lucide="calendar" class="w-4 h-4 text-alecar-gold"></i>
+            </div>
+            <div id="kpi-sales-month" class="text-2xl font-bold text-white">$ 0</div>
+            <div id="kpi-profit-month" class="text-xs text-emerald-400 mt-1">Ganancia: $ 0</div>
+          </div>
+          <!-- Créditos Pendientes -->
+          <div class="bg-alecar-card border border-alecar-border rounded-2xl p-5 hover:border-alecar-gold/50 transition">
+            <div class="flex justify-between items-center text-gray-400 mb-2">
+              <span class="text-xs uppercase tracking-wider font-semibold">Créditos por Cobrar</span>
+              <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div id="kpi-credits-pending" class="text-2xl font-bold text-amber-400">$ 0</div>
+            <div id="kpi-credits-count" class="text-xs text-gray-400 mt-1">0 clientes en financiamiento</div>
+          </div>
+          <!-- Valor de Inventario -->
+          <div class="bg-alecar-card border border-alecar-border rounded-2xl p-5 hover:border-alecar-gold/50 transition">
+            <div class="flex justify-between items-center text-gray-400 mb-2">
+              <span class="text-xs uppercase tracking-wider font-semibold">Valor Inventario (Venta)</span>
+              <i data-lucide="gem" class="w-4 h-4 text-alecar-gold"></i>
+            </div>
+            <div id="kpi-inventory-val" class="text-2xl font-bold text-alecar-goldLight">$ 0</div>
+            <div id="kpi-inventory-count" class="text-xs text-gray-400 mt-1">0 balines / piezas activas</div>
+          </div>
+        </div>
+
+        <!-- CHARTS & LOW STOCK -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-alecar-card border border-alecar-border rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-alecar-gold"></i> Resumen de Ingresos vs Utilidad
+              </h3>
+            </div>
+            <div class="h-64">
+              <canvas id="salesChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Stock Bajo & Top Productos -->
+          <div class="bg-alecar-card border border-alecar-border rounded-2xl p-5 flex flex-col justify-between">
+            <div>
+              <h3 class="text-base font-semibold text-white flex items-center gap-2 mb-3">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i> Alerta de Stock Bajo (≤ 5)
+              </h3>
+              <div id="low-stock-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                <!-- Inyectado vía JS -->
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-alecar-border">
+              <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Producto Más Vendido</h4>
+              <p id="top-product-name" class="text-sm font-medium text-alecar-gold">Calculando con ventas...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 2. INVENTARIO / STOCK ================= -->
+      <section id="view-inventory" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-white font-brand">Inventario de Joyas & Balines</h2>
+            <p class="text-sm text-gray-400">Oro 18K, Balines certificados #3 a #8 y piezas artesanales.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="openProductModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl gold-gradient-bg text-black font-semibold text-sm hover:opacity-95 shadow-md shadow-alecar-gold/20">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i> Nuevo Producto
+            </button>
+            <button onclick="exportInventoryExcel()" class="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-alecar-card border border-alecar-border text-gray-300 hover:text-white text-sm">
+              <i data-lucide="file-spreadheet" class="w-4 h-4"></i> Excel
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros y Búsqueda -->
+        <div class="bg-alecar-card border border-alecar-border rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div class="relative w-full md:w-80">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-500"></i>
+            <input type="text" id="inv-search" oninput="renderInventoryTable()" placeholder="Buscar por código, nombre o balín..." class="w-full bg-alecar-black border border-alecar-border rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-alecar-gold">
+          </div>
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <select id="inv-filter-balin" onchange="renderInventoryTable()" class="bg-alecar-black border border-alecar-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-alecar-gold">
+              <option value="">Todos los Balines</option>
+              <option value="#3">Balín #3</option>
+              <option value="#4">Balín #4</option>
+              <option value="#5">Balín #5</option>
+              <option value="#6">Balín #6</option>
+              <option value="#7">Balín #7</option>
+              <option value="#8">Balín #8</option>
+              <option value="Sin Balín">Otro / Sin Balín</option>
+            </select>
+            <select id="inv-filter-status" onchange="renderInventoryTable()" class="bg-alecar-black border border-alecar-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-alecar-gold">
+              <option value="">Todos los Estados</option>
+              <option value="Disponible">Disponible</option>
+              <option value="Agotado">Agotado</option>
+              <option value="Reservado">Reservado</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tabla de Inventario -->
+        <div class="bg-alecar-card border border-alecar-border rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-black/40 text-alecar-gold border-b border-alecar-border text-xs uppercase font-semibold">
+                <tr>
+                  <th class="p-3.5">Foto</th>
+                  <th class="p-3.5">Código / Nombre</th>
+                  <th class="p-3.5">Balín & Material</th>
+                  <th class="p-3.5 text-center">Stock</th>
+                  <th class="p-3.5 text-right">Costo Unit.</th>
+                  <th class="p-3.5 text-right">Precio Venta</th>
+                  <th class="p-3.5 text-right">Margen</th>
+                  <th class="p-3.5 text-center">Estado</th>
+                  <th class="p-3.5 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-tbody" class="divide-y divide-alecar-border">
+                <!-- Inyectado vía JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 3. COSTOS FIJOS OPERATIVOS ================= -->
+      <section id="view-costs" class="hidden space-y-6">
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-white font-brand">Configuración de Costos Fijos</h2>
+          <p class="text-sm text-gray-400">Administra los valores por defecto que se agregan a las confecciones y cotizaciones.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+          <div class="bg-alecar-card border border-alecar-border rounded-2xl p-6 space-y-4">
+            <h3 class="text-base font-semibold text-alecar-gold flex items-center gap-2">
+              <i data-lucide="wrench" class="w-5 h-5"></i> Tarifas Predeterminadas (COP)
+            </h3>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Mano de Obra Mantenimiento</label>
+              <input type="number" id="cost-mantenimiento" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-3 text-white focus:border-alecar-gold">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Mano de Obra Manilla Nueva</label>
+              <input type="number" id="cost-manilla" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-3 text-white focus:border-alecar-gold">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Empaque de Lujo / Estuche</label>
+              <input type="number" id="cost-empaque" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-3 text-white focus:border-alecar-gold">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Gastos de Hilo y Confección</label>
+              <input type="number" id="cost-hilo" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-3 text-white focus:border-alecar-gold">
+            </div>
+            <button onclick="saveOperatingCosts()" class="w-full py-3 rounded-xl gold-gradient-bg text-black font-bold text-sm hover:opacity-90">
+              Guardar Cambios de Tarifas
+            </button>
+          </div>
+
+          <div class="bg-alecar-card border border-alecar-border rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+              <h4 class="font-semibold text-white mb-2 flex items-center gap-2">
+                <i data-lucide="info" class="w-4 h-4 text-alecar-gold"></i> Aplicación en Ventas
+              </h4>
+              <p class="text-sm text-gray-400 leading-relaxed">
+                Estos valores se cargan con 1 clic al momento de facturar una pulsera artesanal o realizar una cotización personalizada. Puedes modificarlos en cualquier momento sin alterar las ventas ya registradas.
+              </p>
+            </div>
+            <div class="p-4 rounded-xl bg-black/40 border border-alecar-gold/20">
+              <span class="text-xs text-alecar-goldLight font-medium">Tip Profesional Alecar:</span>
+              <p class="text-xs text-gray-400 mt-1">El valor del hilo y la mano de obra se suman al costo directo de la pieza para garantizar que tu margen neto sea exacto.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 4. VENTAS Y COTIZACIONES ================= -->
+      <section id="view-sales" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-white font-brand">Punto de Venta & Cotizaciones</h2>
+            <p class="text-sm text-gray-400">Emisión de remisiones, liquidación de contado y créditos inmediatos.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="resetSaleForm()" class="px-4 py-2 rounded-xl bg-alecar-card border border-alecar-border text-gray-300 text-sm hover:text-white">
+              Nueva Venta Limpia
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Columna Izquierda: Selección de Productos & Adicionales -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="bg-alecar-card border border-alecar-border rounded-2xl p-4">
+              <h3 class="text-sm font-semibold text-alecar-gold mb-3 flex items-center gap-2">
+                <i data-lucide="search" class="w-4 h-4"></i> Seleccionar Joya o Balín
+              </h3>
+              <div class="flex gap-2 mb-3">
+                <select id="sale-product-select" onchange="previewSaleProduct(this.value)" class="flex-1 bg-alecar-black border border-alecar-border rounded-xl p-2.5 text-sm text-white">
+                  <option value="">-- Elige un producto del inventario --</option>
+                </select>
+                <input type="number" id="sale-product-qty" value="1" min="1" class="w-20 bg-alecar-black border border-alecar-border rounded-xl p-2.5 text-center text-sm text-white font-bold">
+                <button onclick="addProductToCart()" class="px-4 py-2.5 rounded-xl gold-gradient-bg text-black font-semibold text-sm hover:opacity-90">
+                  Agregar
+                </button>
+              </div>
+
+              <!-- Product Preview Card -->
+              <div id="sale-product-preview" class="hidden p-3 rounded-xl bg-black/40 border border-alecar-border flex gap-4 items-center">
+                <img id="prev-img" src="" class="w-14 h-14 rounded-lg object-cover border border-alecar-gold/30">
+                <div class="text-xs space-y-0.5">
+                  <p id="prev-title" class="font-bold text-white text-sm"></p>
+                  <p class="text-gray-400">Balín / Material: <span id="prev-balin" class="text-alecar-gold"></span></p>
+                  <p class="text-gray-400">Stock disponible: <span id="prev-stock" class="text-white font-bold"></span> | Precio Venta: <span id="prev-price" class="text-emerald-400 font-bold"></span></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Costos Operativos Adicionales (Checkboxes) -->
+            <div class="bg-alecar-card border border-alecar-border rounded-2xl p-4">
+              <h3 class="text-sm font-semibold text-alecar-gold mb-3 flex items-center gap-2">
+                <i data-lucide="plus-square" class="w-4 h-4"></i> Costos Adicionales de Confección
+              </h3>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <label class="flex items-center gap-2 p-2.5 rounded-xl bg-alecar-black border border-alecar-border cursor-pointer hover:border-alecar-gold/40">
+                  <input type="checkbox" id="add-cost-mantenimiento" onchange="calculateCartTotals()" class="rounded accent-alecar-gold">
+                  <span>Mantenimiento (<span id="lbl-cost-mantenimiento">$10.000</span>)</span>
+                </label>
+                <label class="flex items-center gap-2 p-2.5 rounded-xl bg-alecar-black border border-alecar-border cursor-pointer hover:border-alecar-gold/40">
+                  <input type="checkbox" id="add-cost-manilla" onchange="calculateCartTotals()" class="rounded accent-alecar-gold">
+                  <span>Mano de Obra (<span id="lbl-cost-manilla">$10.000</span>)</span>
+                </label>
+                <label class="flex items-center gap-2 p-2.5 rounded-xl bg-alecar-black border border-alecar-border cursor-pointer hover:border-alecar-gold/40">
+                  <input type="checkbox" id="add-cost-empaque" onchange="calculateCartTotals()" class="rounded accent-alecar-gold">
+                  <span>Empaque Lujo (<span id="lbl-cost-empaque">$15.000</span>)</span>
+                </label>
+                <label class="flex items-center gap-2 p-2.5 rounded-xl bg-alecar-black border border-alecar-border cursor-pointer hover:border-alecar-gold/40">
+                  <input type="checkbox" id="add-cost-hilo" onchange="calculateCartTotals()" class="rounded accent-alecar-gold">
+                  <span>Gasto Hilo (<span id="lbl-cost-hilo">$5.000</span>)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Tabla Carrito de Ítems -->
+            <div class="bg-alecar-card border border-alecar-border rounded-2xl p-4">
+              <h3 class="text-sm font-semibold text-white mb-2">Detalle de la Orden</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="text-gray-400 border-b border-alecar-border pb-1">
+                    <tr>
+                      <th class="py-2">Ítem</th>
+                      <th class="py-2 text-center">Cant.</th>
+                      <th class="py-2 text-right">Unitario</th>
+                      <th class="py-2 text-right">Subtotal</th>
+                      <th class="py-2 text-center">Quitar</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cart-tbody" class="divide-y divide-alecar-border">
+                    <!-- Dinámico -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Cliente, Totales & Cierre -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="bg-alecar-card border border-alecar-border rounded-2xl p-5 space-y-4">
+              <h3 class="text-sm font-bold text-alecar-gold flex items-center gap-2 uppercase tracking-wider">
+                <i data-lucide="user" class="w-4 h-4"></i> Datos del Cliente
+              </h3>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="col-span-2">
+                  <label class="block text-gray-400 mb-1">Nombre Completo *</label>
+                  <input type="text" id="cust-name" placeholder="Ej: Diana Salazar" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2 text-white">
+                </div>
+                <div>
+                  <label class="block text-gray-400 mb-1">Cédula / NIT</label>
+                  <input type="text" id="cust-id" placeholder="1020..." class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2 text-white">
+                </div>
+                <div>
+                  <label class="block text-gray-400 mb-1">Teléfono / WhatsApp *</label>
+                  <input type="text" id="cust-phone" placeholder="3001234567" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2 text-white">
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-gray-400 mb-1">Dirección y Ciudad</label>
+                  <input type="text" id="cust-address" placeholder="Cl 45 # 10-20, Bogotá" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2 text-white">
+                </div>
+              </div>
+
+              <!-- Tipo de Documento y Método de Pago -->
+              <div class="pt-3 border-t border-alecar-border grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <label class="block text-gray-400 mb-1">Tipo de Registro</label>
+                  <select id="sale-type" onchange="toggleSaleType(this.value)" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2 text-white">
+                    <option value="VENTA_CONTADO">Venta de Contado</option>
+                    <option value="COTIZACION">Cotización</option>
+                    <option value="CREDITO">Venta a Crédito</option>
+                  </select>
+                </div>
+                <div id="wrapper-payment-method">
+                  <label class="block text-gray-400 mb-1">Método de Pago</label>
+                  <select id="sale-method" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2 text-white">
+                    <option value="Nequi">Nequi</option>
+                    <option value="Daviplata">Daviplata</option>
+                    <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Opciones Extra de Crédito si aplica -->
+              <div id="credit-extra-fields" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-2">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-gray-300">Nº de Cuotas</label>
+                    <input type="number" id="sale-credit-cuotas" value="2" min="1" class="w-full bg-black border border-alecar-border rounded-lg p-1.5 text-white">
+                  </div>
+                  <div>
+                    <label class="text-gray-300">Vencimiento</label>
+                    <input type="date" id="sale-credit-due" class="w-full bg-black border border-alecar-border rounded-lg p-1.5 text-white">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Totales -->
+              <div class="pt-3 border-t border-alecar-border space-y-1.5 text-sm">
+                <div class="flex justify-between text-gray-400">
+                  <span>Subtotal Joyas:</span>
+                  <span id="cart-subtotal">$ 0</span>
+                </div>
+                <div class="flex justify-between text-gray-400">
+                  <span>Costos Confección / Empaque:</span>
+                  <span id="cart-op-costs">$ 0</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-400">
+                  <span>Descuento Especial ($):</span>
+                  <input type="number" id="cart-discount" value="0" min="0" oninput="calculateCartTotals()" class="w-24 bg-alecar-black border border-alecar-border rounded px-2 py-0.5 text-right text-white">
+                </div>
+                <div class="flex justify-between text-lg font-bold text-white pt-2 border-t border-alecar-border">
+                  <span class="gold-gradient-text">TOTAL FINAL:</span>
+                  <span id="cart-total" class="text-alecar-gold font-mono">$ 0</span>
+                </div>
+                <p id="cart-total-letters" class="text-[11px] text-gray-400 italic text-right"></p>
+              </div>
+
+              <!-- Botones de Acción -->
+              <div class="pt-2 flex flex-col gap-2">
+                <button onclick="processCheckout()" class="w-full py-3 rounded-xl gold-gradient-bg text-black font-bold text-sm tracking-wide hover:opacity-95 shadow-lg shadow-alecar-gold/20 flex items-center justify-center gap-2">
+                  <i data-lucide="check-circle" class="w-4 h-4"></i> Confirmar & Generar Remisión
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 5. MÓDULO DE CRÉDITOS & ABONOS ================= -->
+      <section id="view-credits" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-white font-brand">Gestión de Créditos & Abonos</h2>
+            <p class="text-sm text-gray-400">Financiaciones, historial de cuotas y saldos pendientes.</p>
+          </div>
+          <button onclick="openManualCreditModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-alecar-card border border-alecar-gold/40 text-alecar-gold text-sm font-semibold hover:bg-alecar-gold/10">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Registrar Deuda Antigua / Manual
+          </button>
+        </div>
+
+        <!-- Tabla de Créditos -->
+        <div class="bg-alecar-card border border-alecar-border rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-black/40 text-alecar-gold border-b border-alecar-border text-xs uppercase font-semibold">
+                <tr>
+                  <th class="p-3.5">ID / Fecha</th>
+                  <th class="p-3.5">Cliente</th>
+                  <th class="p-3.5">Contacto</th>
+                  <th class="p-3.5 text-right">Total Crédito</th>
+                  <th class="p-3.5 text-right">Abonado</th>
+                  <th class="p-3.5 text-right">Saldo Deudor</th>
+                  <th class="p-3.5 text-center">Progreso</th>
+                  <th class="p-3.5 text-center">Estado</th>
+                  <th class="p-3.5 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="credits-tbody" class="divide-y divide-alecar-border">
+                <!-- Inyectado vía JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 6. REPORTES Y EXPORTACIONES ================= -->
+      <section id="view-reports" class="hidden space-y-6">
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-white font-brand">Módulo de Reportes Contables</h2>
+          <p class="text-sm text-gray-400">Filtra ventas, ganancias netas y movimientos para exportación contable.</p>
+        </div>
+
+        <div class="bg-alecar-card border border-alecar-border rounded-2xl p-5 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+            <div>
+              <label class="block text-gray-400 mb-1">Rango Temporal</label>
+              <select id="rep-filter-period" onchange="runFinancialReport()" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-2.5 text-white">
+                <option value="today">Hoy</option>
+                <option value="this-month" selected>Mes Actual</option>
+                <option value="this-year">Año Actual</option>
+                <option value="all">Histórico Completo</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Módulo a Reportar</label>
+              <select id="rep-filter-type" onchange="runFinancialReport()" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-2.5 text-white">
+                <option value="ventas">Ventas & Utilidades</option>
+                <option value="inventario">Inventario Actual</option>
+                <option value="creditos">Cartera de Créditos</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2 flex items-end gap-2">
+              <button onclick="exportCurrentReportExcel()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2">
+                <i data-lucide="sheet" class="w-4 h-4"></i> Exportar a Excel
+              </button>
+              <button onclick="window.print()" class="flex-1 py-2.5 rounded-xl bg-alecar-black border border-alecar-border hover:border-alecar-gold text-white font-semibold text-xs flex items-center justify-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Reporte
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultados del Reporte -->
+        <div id="report-results-wrapper" class="bg-alecar-card border border-alecar-border rounded-2xl p-5">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="report-title" class="text-base font-semibold text-white">Resultados del Informe</h3>
+            <span id="report-summary-badge" class="text-xs px-3 py-1 rounded-full bg-alecar-gold/10 text-alecar-gold border border-alecar-gold/30"></span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead id="report-thead" class="text-alecar-gold border-b border-alecar-border pb-2"></thead>
+              <tbody id="report-tbody" class="divide-y divide-alecar-border"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 7. SEGURIDAD Y LOGS ================= -->
+      <section id="view-logs" class="hidden space-y-6">
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-white font-brand">Auditoría & Seguridad</h2>
+          <p class="text-sm text-gray-400">Historial inmutable de operaciones, ventas y cambios de stock.</p>
+        </div>
+
+        <div class="bg-alecar-card border border-alecar-border rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-white">Registro de Actividad (Log del Sistema)</h3>
+            <button onclick="clearActivityLogs()" class="text-xs text-rose-400 hover:underline">Limpiar Registros</button>
+          </div>
+          <div id="logs-container" class="space-y-2 max-h-96 overflow-y-auto font-mono text-xs text-gray-300">
+            <!-- Dinámico -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= MODAL: NUEVO / EDITAR PRODUCTO ================= -->
+  <div id="modal-product" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-alecar-card border border-alecar-gold/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-alecar-border pb-3">
+        <h3 id="modal-prod-title" class="text-lg font-bold text-white font-brand">Registrar Nueva Joya</h3>
+        <button onclick="closeModal('modal-product')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <input type="hidden" id="prod-edit-id">
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <div>
+          <label class="block text-gray-400 mb-1">Código (Automático)</label>
+          <input type="text" id="prod-code" readonly class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-alecar-gold font-mono font-bold">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-gray-400 mb-1">Nombre de la Joya *</label>
+          <input type="text" id="prod-name" placeholder="Ej: Manilla Balines Oro 18K y Neopreno" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+        </div>
+
+        <div>
+          <label class="block text-gray-400 mb-1">Tipo de Balín *</label>
+          <select id="prod-balin" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white font-semibold">
+            <option value="#3">Balín #3</option>
+            <option value="#4">Balín #4</option>
+            <option value="#5">Balín #5</option>
+            <option value="#6">Balín #6</option>
+            <option value="#7">Balín #7</option>
+            <option value="#8">Balín #8</option>
+            <option value="Sin Balín">Sin Balín / Dije / Cadena</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Material</label>
+          <input type="text" id="prod-material" value="Oro 18K" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-alecar-goldLight font-semibold">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Estado Inicial</label>
+          <select id="prod-status" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+            <option value="Disponible">Disponible</option>
+            <option value="Agotado">Agotado</option>
+            <option value="Reservado">Reservado</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-400 mb-1">Cantidad Comprada</label>
+          <input type="number" id="prod-qty-bought" value="1" min="1" oninput="calcProductMargins()" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Cantidad Disponible (Stock)</label>
+          <input type="number" id="prod-stock" value="1" min="0" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white font-bold">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Unidad de Medida</label>
+          <select id="prod-unit" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+            <option value="Unidad">Unidad (UND)</option>
+            <option value="Gramo">Gramo (GR)</option>
+            <option value="Juego">Juego / Par</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-400 mb-1">Costo Unitario Compra (COP) *</label>
+          <input type="number" id="prod-cost" placeholder="Ej: 80000" oninput="calcProductMargins()" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white font-semibold">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Precio de Venta (COP) *</label>
+          <input type="number" id="prod-price" placeholder="Ej: 130000" oninput="calcProductMargins()" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white font-semibold">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Margen Calculado (%)</label>
+          <input type="text" id="prod-margin" readonly class="w-full bg-black border border-alecar-border rounded-lg p-2.5 text-emerald-400 font-bold font-mono">
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-gray-400 mb-1">Imagen del Producto (URL Web o Subir Archivo)</label>
+          <div class="flex gap-2">
+            <input type="text" id="prod-img-url" placeholder="https://mi-imagen.com/balin.jpg" class="flex-1 bg-alecar-black border border-alecar-border rounded-lg p-2 text-white text-xs">
+            <label class="px-3 py-2 rounded-lg bg-alecar-card border border-alecar-gold/40 text-alecar-gold cursor-pointer hover:bg-alecar-gold/10">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <input type="file" id="prod-img-file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Proveedor</label>
+          <input type="text" id="prod-supplier" placeholder="Distribuidor / Taller" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+        </div>
+
+        <div class="sm:col-span-3">
+          <label class="block text-gray-400 mb-1">Descripción / Notas Artesanales</label>
+          <textarea id="prod-desc" rows="2" placeholder="Detalles de tejido, macramé, peso en oro o especificaciones..." class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white"></textarea>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-alecar-border flex justify-end gap-3">
+        <button onclick="closeModal('modal-product')" class="px-4 py-2 rounded-xl bg-alecar-black text-gray-300 hover:text-white text-sm">Cancelar</button>
+        <button onclick="saveProduct()" class="px-6 py-2.5 rounded-xl gold-gradient-bg text-black font-bold text-sm hover:opacity-90">Guardar Producto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ABONO A CRÉDITO ================= -->
+  <div id="modal-abono" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-alecar-card border border-alecar-gold/40 rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-alecar-border pb-3">
+        <h3 class="text-base font-bold text-white font-brand">Registrar Nuevo Abono</h3>
+        <button onclick="closeModal('modal-abono')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="hidden" id="abono-credit-id">
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <span class="text-gray-400">Cliente:</span>
+          <p id="abono-modal-client" class="text-white font-bold text-sm"></p>
+        </div>
+        <div class="flex justify-between p-3 rounded-xl bg-black border border-alecar-border">
+          <div>
+            <span class="text-gray-400">Total:</span>
+            <p id="abono-modal-total" class="font-bold text-white"></p>
+          </div>
+          <div>
+            <span class="text-gray-400">Saldo Pendiente:</span>
+            <p id="abono-modal-balance" class="font-bold text-rose-400"></p>
+          </div>
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Monto del Abono (COP) *</label>
+          <input type="number" id="abono-amount" min="1" placeholder="Ej: 50000" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-3 text-white font-bold text-base">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Método de Recepción</label>
+          <select id="abono-method" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-2.5 text-white">
+            <option value="Nequi">Nequi</option>
+            <option value="Daviplata">Daviplata</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Nota u Observación</label>
+          <input type="text" id="abono-note" placeholder="Cuota 1 de 3 / Transferencia aprobada" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-2.5 text-white">
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-alecar-border flex justify-end gap-2">
+        <button onclick="closeModal('modal-abono')" class="px-4 py-2 rounded-xl bg-alecar-black text-gray-300 text-xs">Cerrar</button>
+        <button onclick="saveAbono()" class="px-5 py-2.5 rounded-xl gold-gradient-bg text-black font-bold text-xs">Confirmar Abono</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CRÉDITO MANUAL / DEUDA ANTIGUA ================= -->
+  <div id="modal-manual-credit" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-alecar-card border border-alecar-gold/40 rounded-2xl max-w-lg w-full p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-alecar-border pb-3">
+        <h3 class="text-base font-bold text-white font-brand">Registrar Cartera / Deuda Antigua</h3>
+        <button onclick="closeModal('modal-manual-credit')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="col-span-2">
+          <label class="block text-gray-400 mb-1">Nombre Completo del Cliente *</label>
+          <input type="text" id="mc-name" placeholder="Ej: Carlos Mejía" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Cédula</label>
+          <input type="text" id="mc-id" placeholder="103..." class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Teléfono / WhatsApp *</label>
+          <input type="text" id="mc-phone" placeholder="310..." class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Monto Total de la Deuda *</label>
+          <input type="number" id="mc-total" placeholder="150000" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white font-bold">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Fecha Límite Pago</label>
+          <input type="date" id="mc-due" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+        </div>
+        <div class="col-span-2">
+          <label class="block text-gray-400 mb-1">Concepto / Joya adeudada</label>
+          <input type="text" id="mc-notes" placeholder="Pulsera balín #5 confeccionada el mes pasado" class="w-full bg-alecar-black border border-alecar-border rounded-lg p-2.5 text-white">
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-alecar-border flex justify-end gap-2">
+        <button onclick="closeModal('modal-manual-credit')" class="px-4 py-2 rounded-xl bg-alecar-black text-gray-300 text-xs">Cancelar</button>
+        <button onclick="saveManualCredit()" class="px-5 py-2.5 rounded-xl gold-gradient-bg text-black font-bold text-xs">Registrar Deuda</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: FACTURA / REMISIÓN / COBRO PDF ================= -->
+  <div id="modal-invoice" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6 overflow-y-auto">
+    <div class="bg-white text-gray-900 rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative my-auto">
+      
+      <!-- Actions Bar -->
+      <div class="no-print flex justify-between items-center border-b pb-4">
+        <span class="text-xs uppercase font-bold tracking-wider text-amber-700">Comprobante Comercial Generado</span>
+        <div class="flex items-center gap-2">
+          <button onclick="shareInvoiceWhatsApp()" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 flex items-center gap-1.5">
+            <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
+          </button>
+          <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 flex items-center gap-1.5">
+            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
+          </button>
+          <button onclick="closeModal('modal-invoice')" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- PRINTABLE DOCUMENT AREA -->
+      <div id="printable-area" class="space-y-6 bg-white p-2 text-black">
+        <!-- Encabezado Remisión -->
+        <div class="flex justify-between items-start border-b-2 border-amber-600 pb-4">
+          <div>
+            <h2 class="text-2xl font-bold font-brand tracking-widest text-gray-900">JOYERÍA ALECAR</h2>
+            <p class="text-xs text-amber-800 font-semibold tracking-wider">ORO 18K • DISEÑO ARTESANAL EXCLUSIVO</p>
+            <p class="text-xs text-gray-500 mt-1">NIT: 1.098.765.432-1 • Cel / WhatsApp: 300 000 0000</p>
+            <p class="text-xs text-gray-500">Colombia • Envíos Seguros a Todo el País</p>
+          </div>
+          <div class="text-right">
+            <span id="doc-badge-type" class="inline-block px-3 py-1 rounded bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider mb-1">REMISIÓN / VENTA</span>
+            <p class="text-xs font-mono font-bold text-gray-700">Nº: <span id="doc-code">ALC-0001</span></p>
+            <p class="text-xs text-gray-500">Fecha: <span id="doc-date"></span></p>
+          </div>
+        </div>
+
+        <!-- Info Cliente -->
+        <div class="grid grid-cols-2 gap-4 text-xs bg-amber-50/50 p-3 rounded-lg border border-amber-200/60">
+          <div>
+            <p class="text-gray-500">Señor(a):</p>
+            <p id="doc-cust-name" class="font-bold text-gray-900 text-sm"></p>
+            <p class="text-gray-600">C.C. / NIT: <span id="doc-cust-id"></span></p>
+          </div>
+          <div class="text-right sm:text-left">
+            <p class="text-gray-500">Contacto & Ubicación:</p>
+            <p id="doc-cust-phone" class="font-medium text-gray-800"></p>
+            <p id="doc-cust-address" class="text-gray-600"></p>
+          </div>
+        </div>
+
+        <!-- Tabla de Artículos -->
+        <table class="w-full text-xs text-left">
+          <thead class="border-b-2 border-gray-300 text-gray-700 uppercase font-semibold">
+            <tr>
+              <th class="py-2">Descripción Joya / Servicio</th>
+              <th class="py-2 text-center">Cant.</th>
+              <th class="py-2 text-right">V. Unitario</th>
+              <th class="py-2 text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="doc-tbody" class="divide-y divide-gray-200">
+            <!-- Dinámico -->
+          </tbody>
+        </table>
+
+        <!-- Totales y Valor en Letras -->
+        <div class="border-t-2 border-gray-300 pt-3 flex flex-col sm:flex-row justify-between items-start gap-4 text-xs">
+          <div class="max-w-xs space-y-1">
+            <p class="font-semibold text-gray-700">Valor en Letras:</p>
+            <p id="doc-total-letters" class="italic text-gray-600 capitalize"></p>
+            <p class="text-[10px] text-gray-400 mt-2">Garantía certificada de por vida en autenticidad de Oro 18 Kilates. No cubre rotura de hilos por fuerza excesiva.</p>
+          </div>
+          <div class="w-full sm:w-60 space-y-1.5 text-right font-medium">
+            <div class="flex justify-between text-gray-600">
+              <span>Subtotal:</span>
+              <span id="doc-subtotal">$ 0</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+              <span>Descuento:</span>
+              <span id="doc-discount">$ 0</span>
+            </div>
+            <div class="flex justify-between text-base font-bold text-gray-900 pt-1 border-t">
+              <span>TOTAL A PAGAR:</span>
+              <span id="doc-total">$ 0</span>
+            </div>
+            <div id="doc-credit-details" class="hidden text-xs text-amber-800 pt-1">
+              <span>Saldo Pendiente: </span><span id="doc-balance-due" class="font-bold"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Firmas -->
+        <div class="pt-8 flex justify-between text-xs text-center text-gray-500">
+          <div class="border-t border-gray-400 w-44 pt-1">Firma Joyería Alecar</div>
+          <div class="border-t border-gray-400 w-44 pt-1">Aceptado Cliente</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: USUARIOS Y ROLES ================= -->
+  <div id="modal-auth" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-alecar-card border border-alecar-gold/40 rounded-2xl max-w-sm w-full p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-alecar-border pb-3">
+        <h3 class="text-base font-bold text-white font-brand">Cambio de Rol y Sesión</h3>
+        <button onclick="closeModal('modal-auth')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-gray-400 mb-1">Nombre de Usuario</label>
+          <input type="text" id="auth-username" value="Admin Alecar" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-2.5 text-white">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Rol Operativo</label>
+          <select id="auth-role" class="w-full bg-alecar-black border border-alecar-border rounded-xl p-2.5 text-white font-semibold">
+            <option value="Administrador">Administrador (Control Total)</option>
+            <option value="Vendedor">Vendedor (Solo Ventas y Cotización)</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="applyUserRole()" class="w-full py-2.5 rounded-xl gold-gradient-bg text-black font-bold text-xs">Actualizar Sesión</button>
+    </div>
+  </div>
+
+  <!-- LOGIC SCRIPT -->
+  <script>
+    /* ========================================================
+       ESTADO CENTRALIZADO Y PERSISTENCIA (LOCALSTORAGE ENGINE)
+       ======================================================== */
+    const STORAGE_KEY = 'ALECAR_JEWELRY_DB_V2';
+
+    const defaultState = {
+      user: { name: 'Admin Alecar', role: 'Administrador' },
+      operatingCosts: {
+        mantenimiento: 10000,
+        manilla: 10000,
+        empaque: 15000,
+        hilo: 5000
+      },
+      products: [
+        {
+          id: 'PROD-1001',
+          code: 'ALC-B4-01',
+          name: 'Pulsera Clásica Neopreno Balines #4',
+          balin: '#4',
+          material: 'Oro 18K',
+          desc: 'Pulsera artesanal ajustable con 10 balines de oro garantizado y neopreno importado.',
+          supplier: 'Taller Central Bucaramanga',
+          date: '2025-01-15',
+          qtyBought: 10,
+          stock: 8,
+          unit: 'Unidad',
+          cost: 140000,
+          price: 240000,
+          margin: 71.43,
+          status: 'Disponible',
+          img: 'https://images.unsplash.com/photo-1611591475152-4783113828af?w=400&auto=format&fit=crop&q=80'
+        },
+        {
+          id: 'PROD-1002',
+          code: 'ALC-B6-02',
+          name: 'Manilla Macramé Oro Balín Diamantado #6',
+          balin: '#6',
+          material: 'Oro 18K',
+          desc: 'Diseño exclusivo tejido a mano en hilo de alta resistencia con balín central labrado.',
+          supplier: 'Alecar Joyeros',
+          date: '2025-02-01',
+          qtyBought: 5,
+          stock: 4,
+          unit: 'Unidad',
+          cost: 210000,
+          price: 360000,
+          margin: 71.42,
+          status: 'Disponible',
+          img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&auto=format&fit=crop&q=80'
+        },
+        {
+          id: 'PROD-1003',
+          code: 'ALC-B8-03',
+          name: 'Balín Liso Joyería #8 (Unidad Suelta)',
+          balin: '#8',
+          material: 'Oro 18K',
+          desc: 'Balín hueco de alta densidad para engaste en pulseras pesadas.',
+          supplier: 'Fundición Medellín',
+          date: '2025-02-10',
+          qtyBought: 20,
+          stock: 2, // Stock bajo de prueba
+          unit: 'Unidad',
+          cost: 85000,
+          price: 135000,
+          margin: 58.82,
+          status: 'Disponible',
+          img: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&auto=format&fit=crop&q=80'
+        }
+      ],
+      sales: [],
+      credits: [],
+      logs: [
+        { date: new Date().toISOString(), text: 'Sistema Joyería Alecar iniciado correctamente.' }
+      ]
+    };
+
+    let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState;
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    function logActivity(text) {
+      const entry = { date: new Date().toISOString(), text };
+      appData.logs.unshift(entry);
+      saveState();
+      renderLogs();
+    }
+
+    // Formateador de Moneda Colombiana (COP)
+    const formatCOP = (num) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(num || 0);
+
+    /* ========================================================
+       NAVEGACIÓN ENTRE PANTALLAS
+       ======================================================== */
+    function navigate(viewName) {
+      const views = ['dashboard', 'inventory', 'sales', 'credits', 'costs', 'reports', 'logs'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        const nav = document.getElementById(`nav-${v}`);
+        if (el) el.classList.toggle('hidden', v !== viewName);
+        if (nav) {
+          if (v === viewName) {
+            nav.classList.add('text-alecar-gold', 'bg-alecar-gold/10', 'border', 'border-alecar-gold/30');
+            nav.classList.remove('text-gray-400');
+          } else {
+            nav.classList.remove('text-alecar-gold', 'bg-alecar-gold/10', 'border', 'border-alecar-gold/30');
+            nav.classList.add('text-gray-400');
+          }
+        }
+      });
+
+      if (viewName === 'dashboard') updateDashboard();
+      if (viewName === 'inventory') renderInventoryTable();
+      if (viewName === 'sales') prepareSalesModule();
+      if (viewName === 'credits') renderCreditsTable();
+      if (viewName === 'costs') loadCostsInputs();
+      if (viewName === 'reports') runFinancialReport();
+      if (viewName === 'logs') renderLogs();
+
+      lucide.createIcons();
+    }
+
+    /* ========================================================
+       MODALES
+       ======================================================== */
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    /* ========================================================
+       1. DASHBOARD ENGINE & CHART.JS
+       ======================================================== */
+    let salesChartInstance = null;
+
+    function updateDashboard() {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      let salesDay = 0, profitDay = 0;
+      let salesMonth = 0, profitMonth = 0;
+      let salesYear = 0, profitYear = 0;
+
+      // Cálculo de ventas
+      appData.sales.forEach(s => {
+        if (s.type === 'COTIZACION') return; // Cotizaciones no suman venta ejecutada
+        const sDate = new Date(s.date);
+        const sDateStr = s.date.split('T')[0];
+        const isYear = sDate.getFullYear() === currentYear;
+        const isMonth = isYear && sDate.getMonth() === currentMonth;
+        const isDay = sDateStr === todayStr;
+
+        if (isYear) {
+          salesYear += s.total;
+          profitYear += (s.profit || 0);
+        }
+        if (isMonth) {
+          salesMonth += s.total;
+          profitMonth += (s.profit || 0);
+        }
+        if (isDay) {
+          salesDay += s.total;
+          profitDay += (s.profit || 0);
+        }
+      });
+
+      // Cartera / Créditos pendientes
+      let creditsPending = 0;
+      let pendingCreditsCount = 0;
+      appData.credits.forEach(c => {
+        if (c.status !== 'PAGADO') {
+          creditsPending += (c.total - c.paid);
+          pendingCreditsCount++;
+        }
+      });
+
+      // Inventario
+      let totalInvVal = 0;
+      let totalPieces = 0;
+      let lowStockItems = [];
+
+      appData.products.forEach(p => {
+        totalInvVal += (p.price * p.stock);
+        totalPieces += Number(p.stock);
+        if (p.stock <= 5) lowStockItems.push(p);
+      });
+
+      // Render KPIs
+      document.getElementById('kpi-sales-day').innerText = formatCOP(salesDay);
+      document.getElementById('kpi-profit-day').innerText = `Ganancia: ${formatCOP(profitDay)}`;
+      document.getElementById('kpi-sales-month').innerText = formatCOP(salesMonth);
+      document.getElementById('kpi-profit-month').innerText = `Ganancia: ${formatCOP(profitMonth)}`;
+      document.getElementById('kpi-credits-pending').innerText = formatCOP(creditsPending);
+      document.getElementById('kpi-credits-count').innerText = `${pendingCreditsCount} créditos en curso`;
+      document.getElementById('kpi-inventory-val').innerText = formatCOP(totalInvVal);
+      document.getElementById('kpi-inventory-count').innerText = `${totalPieces} piezas en stock disponible`;
+
+      // Render Alertas de Stock Bajo
+      const lowStockContainer = document.getElementById('low-stock-list');
+      lowStockContainer.innerHTML = '';
+      if (lowStockItems.length === 0) {
+        lowStockContainer.innerHTML = '<p class="text-xs text-gray-400">Stock en niveles óptimos.</p>';
+      } else {
+        lowStockItems.forEach(item => {
+          lowStockContainer.innerHTML += `
+            <div class="flex items-center justify-between p-2 rounded-xl bg-black/40 border border-amber-500/30 text-xs">
+              <div>
+                <span class="font-bold text-white">${item.name}</span>
+                <span class="text-amber-400 ml-1">(${item.balin})</span>
+              </div>
+              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold font-mono">${item.stock} disp.</span>
+            </div>
+          `;
+        });
+      }
+
+      // Render Gráfica
+      renderSalesChart();
+    }
+
+    function renderSalesChart() {
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      if (salesChartInstance) salesChartInstance.destroy();
+
+      // Agrupamos últimos 6 meses
+      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const currentMonth = new Date().getMonth();
+      const labels = [];
+      const salesData = [0, 0, 0, 0, 0, 0];
+      const profitData = [0, 0, 0, 0, 0, 0];
+
+      for (let i = 5; i >= 0; i--) {
+        const mIdx = (currentMonth - i + 12) % 12;
+        labels.push(months[mIdx]);
+      }
+
+      // Calculamos montos de ventas y ganancias reales
+      appData.sales.forEach(s => {
+        if (s.type === 'COTIZACION') return;
+        const d = new Date(s.date);
+        const diffMonth = (currentMonth - d.getMonth() + 12) % 12;
+        if (diffMonth < 6) {
+          const chartIndex = 5 - diffMonth;
+          salesData[chartIndex] += s.total;
+          profitData[chartIndex] += (s.profit || 0);
+        }
+      });
+
+      salesChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Ventas Totales',
+              data: salesData,
+              backgroundColor: '#D4AF37',
+              borderRadius: 6
+            },
+            {
+              label: 'Utilidad Real',
+              data: profitData,
+              backgroundColor: '#10B981',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#bbb', font: { size: 11 } } }
+          },
+          scales: {
+            x: { ticks: { color: '#888' }, grid: { display: false } },
+            y: { ticks: { color: '#888' }, grid: { color: '#222' } }
+          }
+        }
+      });
+    }
+
+    /* ========================================================
+       2. MÓDULO DE INVENTARIO
+       ======================================================== */
+    function renderInventoryTable() {
+      const tbody = document.getElementById('inventory-tbody');
+      const query = document.getElementById('inv-search').value.toLowerCase();
+      const balinFilter = document.getElementById('inv-filter-balin').value;
+      const statusFilter = document.getElementById('inv-filter-status').value;
+
+      tbody.innerHTML = '';
+
+      const filtered = appData.products.filter(p => {
+        const matchQ = p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query) || p.balin.toLowerCase().includes(query);
+        const matchBalin = balinFilter ? p.balin === balinFilter : true;
+        const matchStatus = statusFilter ? p.status === statusFilter : true;
+        return matchQ && matchBalin && matchStatus;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-gray-500">No se encontraron piezas en el inventario.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(p => {
+        const profit = p.price - p.cost;
+        const margin = p.cost > 0 ? (((p.price - p.cost) / p.cost) * 100).toFixed(1) : 0;
+        const statusBadge = p.stock <= 0 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 
+                            p.stock <= 5 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-alecar-card/60 transition">
+            <td class="p-3">
+              <img src="${p.img || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=100'}" class="w-10 h-10 object-cover rounded-lg border border-alecar-border">
+            </td>
+            <td class="p-3">
+              <div class="font-bold text-white">${p.name}</div>
+              <div class="text-[11px] text-alecar-gold font-mono">${p.code}</div>
+            </td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded bg-alecar-gold/10 text-alecar-gold font-bold text-xs border border-alecar-gold/30">${p.balin}</span>
+              <div class="text-[11px] text-gray-400 mt-0.5">${p.material}</div>
+            </td>
+            <td class="p-3 text-center">
+              <span class="font-mono font-bold text-base ${p.stock <= 3 ? 'text-amber-400' : 'text-white'}">${p.stock}</span>
+              <span class="text-[10px] text-gray-500 block">${p.unit}</span>
+            </td>
+            <td class="p-3 text-right font-mono text-gray-300">${formatCOP(p.cost)}</td>
+            <td class="p-3 text-right font-mono font-bold text-alecar-goldLight">${formatCOP(p.price)}</td>
+            <td class="p-3 text-right font-mono text-emerald-400">${margin}%</td>
+            <td class="p-3 text-center">
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold border ${statusBadge}">${p.stock <= 0 ? 'Agotado' : p.status}</span>
+            </td>
+            <td class="p-3 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <button onclick="editProduct('${p.id}')" title="Editar" class="p-1.5 rounded-lg bg-black/60 hover:text-alecar-gold border border-alecar-border">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteProduct('${p.id}')" title="Eliminar" class="p-1.5 rounded-lg bg-black/60 hover:text-rose-400 border border-alecar-border">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function openProductModal(isEdit = false) {
+      if (!isEdit) {
+        document.getElementById('modal-prod-title').innerText = 'Registrar Nueva Joya';
+        document.getElementById('prod-edit-id').value = '';
+        document.getElementById('prod-code').value = 'ALC-' + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('prod-name').value = '';
+        document.getElementById('prod-balin').value = '#4';
+        document.getElementById('prod-material').value = 'Oro 18K';
+        document.getElementById('prod-qty-bought').value = 1;
+        document.getElementById('prod-stock').value = 1;
+        document.getElementById('prod-cost').value = '';
+        document.getElementById('prod-price').value = '';
+        document.getElementById('prod-margin').value = '';
+        document.getElementById('prod-img-url').value = '';
+        document.getElementById('prod-supplier').value = '';
+        document.getElementById('prod-desc').value = '';
+      }
+      openModal('modal-product');
+    }
+
+    function calcProductMargins() {
+      const cost = Number(document.getElementById('prod-cost').value) || 0;
+      const price = Number(document.getElementById('prod-price').value) || 0;
+      if (cost > 0 && price >= 0) {
+        const margin = (((price - cost) / cost) * 100).toFixed(1);
+        document.getElementById('prod-margin').value = `${margin}%`;
+      } else {
+        document.getElementById('prod-margin').value = '0%';
+      }
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById('prod-img-url').value = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveProduct() {
+      const editId = document.getElementById('prod-edit-id').value;
+      const name = document.getElementById('prod-name').value.trim();
+      const cost = Number(document.getElementById('prod-cost').value);
+      const price = Number(document.getElementById('prod-price').value);
+      const stock = Number(document.getElementById('prod-stock').value);
+
+      if (!name || isNaN(cost) || isNaN(price)) {
+        alert('Por favor completa el nombre, valor de compra y precio de venta.');
+        return;
+      }
+
+      const prodData = {
+        id: editId || 'PROD-' + Date.now(),
+        code: document.getElementById('prod-code').value,
+        name,
+        balin: document.getElementById('prod-balin').value,
+        material: document.getElementById('prod-material').value,
+        qtyBought: Number(document.getElementById('prod-qty-bought').value),
+        stock,
+        unit: document.getElementById('prod-unit').value,
+        cost,
+        price,
+        margin: cost > 0 ? Number((((price - cost) / cost) * 100).toFixed(1)) : 0,
+        status: document.getElementById('prod-status').value,
+        img: document.getElementById('prod-img-url').value || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400',
+        supplier: document.getElementById('prod-supplier').value,
+        desc: document.getElementById('prod-desc').value,
+        date: new Date().toISOString()
+      };
+
+      if (editId) {
+        const idx = appData.products.findIndex(p => p.id === editId);
+        if (idx !== -1) appData.products[idx] = prodData;
+        logActivity(`Producto actualizado: ${prodData.name} (${prodData.code})`);
+      } else {
+        appData.products.unshift(prodData);
+        logActivity(`Nuevo producto creado: ${prodData.name} con stock ${prodData.stock}`);
+      }
+
+      saveState();
+      closeModal('modal-product');
+      renderInventoryTable();
+    }
+
+    function editProduct(id) {
+      const p = appData.products.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('modal-prod-title').innerText = 'Editar Joya / Balín';
+      document.getElementById('prod-edit-id').value = p.id;
+      document.getElementById('prod-code').value = p.code;
+      document.getElementById('prod-name').value = p.name;
+      document.getElementById('prod-balin').value = p.balin;
+      document.getElementById('prod-material').value = p.material;
+      document.getElementById('prod-qty-bought').value = p.qtyBought || p.stock;
+      document.getElementById('prod-stock').value = p.stock;
+      document.getElementById('prod-unit').value = p.unit || 'Unidad';
+      document.getElementById('prod-cost').value = p.cost;
+      document.getElementById('prod-price').value = p.price;
+      document.getElementById('prod-img-url').value = p.img;
+      document.getElementById('prod-supplier').value = p.supplier || '';
+      document.getElementById('prod-desc').value = p.desc || '';
+      calcProductMargins();
+      openModal('modal-product');
+    }
+
+    function deleteProduct(id) {
+      if (confirm('¿Estás seguro de eliminar esta pieza del inventario?')) {
+        const p = appData.products.find(x => x.id === id);
+        appData.products = appData.products.filter(x => x.id !== id);
+        logActivity(`Producto eliminado: ${p ? p.name : id}`);
+        saveState();
+        renderInventoryTable();
+      }
+    }
+
+    /* ========================================================
+       3. COSTOS OPERATIVOS FIJOS
+       ======================================================== */
+    function loadCostsInputs() {
+      document.getElementById('cost-mantenimiento').value = appData.operatingCosts.mantenimiento;
+      document.getElementById('cost-manilla').value = appData.operatingCosts.manilla;
+      document.getElementById('cost-empaque').value = appData.operatingCosts.empaque;
+      document.getElementById('cost-hilo').value = appData.operatingCosts.hilo;
+    }
+
+    function saveOperatingCosts() {
+      appData.operatingCosts.mantenimiento = Number(document.getElementById('cost-mantenimiento').value) || 0;
+      appData.operatingCosts.manilla = Number(document.getElementById('cost-manilla').value) || 0;
+      appData.operatingCosts.empaque = Number(document.getElementById('cost-empaque').value) || 0;
+      appData.operatingCosts.hilo = Number(document.getElementById('cost-hilo').value) || 0;
+      saveState();
+      logActivity('Costos fijos actualizados.');
+      alert('Costos operativos guardados exitosamente.');
+      prepareSalesModule(); // Refrescar etiquetas
+    }
+
+    /* ========================================================
+       4. PUNTO DE VENTA, COTIZACIONES Y CARRITO
+       ======================================================== */
+    let cart = [];
+
+    function prepareSalesModule() {
+      // Actualizar labels de costos en la interfaz de venta
+      document.getElementById('lbl-cost-mantenimiento').innerText = formatCOP(appData.operatingCosts.mantenimiento);
+      document.getElementById('lbl-cost-manilla').innerText = formatCOP(appData.operatingCosts.manilla);
+      document.getElementById('lbl-cost-empaque').innerText = formatCOP(appData.operatingCosts.empaque);
+      document.getElementById('lbl-cost-hilo').innerText = formatCOP(appData.operatingCosts.hilo);
+
+      // Llenar selector de productos disponibles
+      const select = document.getElementById('sale-product-select');
+      select.innerHTML = '<option value="">-- Elige un producto del inventario --</option>';
+      appData.products.forEach(p => {
+        select.innerHTML += `<option value="${p.id}">${p.name} [${p.balin}] - Stock: ${p.stock} (${formatCOP(p.price)})</option>`;
+      });
+      calculateCartTotals();
+    }
+
+    function previewSaleProduct(id) {
+      const preview = document.getElementById('sale-product-preview');
+      if (!id) {
+        preview.classList.add('hidden');
+        return;
+      }
+      const p = appData.products.find(x => x.id === id);
+      if (!p) return;
+
+      document.getElementById('prev-img').src = p.img;
+      document.getElementById('prev-title').innerText = p.name;
+      document.getElementById('prev-balin').innerText = `${p.balin} (${p.material})`;
+      document.getElementById('prev-stock').innerText = p.stock;
+      document.getElementById('prev-price').innerText = formatCOP(p.price);
+      preview.classList.remove('hidden');
+    }
+
+    function addProductToCart() {
+      const prodId = document.getElementById('sale-product-select').value;
+      const qty = Number(document.getElementById('sale-product-qty').value) || 1;
+      if (!prodId) { alert('Selecciona un producto primero.'); return; }
+
+      const p = appData.products.find(x => x.id === prodId);
+      if (!p) return;
+
+      if (qty > p.stock) {
+        alert(`Stock insuficiente. Solo quedan ${p.stock} unidades de este balín/joya.`);
+        return;
+      }
+
+      const existingIndex = cart.findIndex(c => c.productId === prodId);
+      if (existingIndex !== -1) {
+        if (cart[existingIndex].qty + qty > p.stock) {
+          alert('La cantidad total en carrito supera el stock existente.');
+          return;
+        }
+        cart[existingIndex].qty += qty;
+        cart[existingIndex].total = cart[existingIndex].qty * p.price;
+      } else {
+        cart.push({
+          productId: p.id,
+          name: p.name,
+          balin: p.balin,
+          cost: p.cost,
+          price: p.price,
+          qty,
+          total: qty * p.price
+        });
+      }
+
+      renderCartTable();
+      calculateCartTotals();
+    }
+
+    function removeCartItem(idx) {
+      cart.splice(idx, 1);
+      renderCartTable();
+      calculateCartTotals();
+    }
+
+    function renderCartTable() {
+      const tbody = document.getElementById('cart-tbody');
+      tbody.innerHTML = '';
+      if (cart.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-500">No hay joyas añadidas.</td></tr>';
+        return;
+      }
+      cart.forEach((item, index) => {
+        tbody.innerHTML += `
+          <tr class="border-b border-alecar-border/50">
+            <td class="py-2">
+              <span class="font-bold text-white">${item.name}</span>
+              <span class="text-alecar-gold block text-[10px]">${item.balin}</span>
+            </td>
+            <td class="py-2 text-center font-bold text-white">${item.qty}</td>
+            <td class="py-2 text-right font-mono">${formatCOP(item.price)}</td>
+            <td class="py-2 text-right font-mono font-bold text-alecar-gold">${formatCOP(item.total)}</td>
+            <td class="py-2 text-center">
+              <button onclick="removeCartItem(${index})" class="text-rose-400 hover:text-rose-300"><i data-lucide="trash" class="w-3.5 h-3.5"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function toggleSaleType(type) {
+      const creditExtra = document.getElementById('credit-extra-fields');
+      const methodWrapper = document.getElementById('wrapper-payment-method');
+      if (type === 'CREDITO') {
+        creditExtra.classList.remove('hidden');
+        methodWrapper.classList.add('opacity-40', 'pointer-events-none');
+      } else {
+        creditExtra.classList.add('hidden');
+        methodWrapper.classList.remove('opacity-40', 'pointer-events-none');
+      }
+    }
+
+    function calculateCartTotals() {
+      let subtotal = cart.reduce((acc, curr) => acc + curr.total, 0);
+
+      let opCosts = 0;
+      if (document.getElementById('add-cost-mantenimiento').checked) opCosts += appData.operatingCosts.mantenimiento;
+      if (document.getElementById('add-cost-manilla').checked) opCosts += appData.operatingCosts.manilla;
+      if (document.getElementById('add-cost-empaque').checked) opCosts += appData.operatingCosts.empaque;
+      if (document.getElementById('add-cost-hilo').checked) opCosts += appData.operatingCosts.hilo;
+
+      const discount = Number(document.getElementById('cart-discount').value) || 0;
+      const total = Math.max(0, subtotal + opCosts - discount);
+
+      document.getElementById('cart-subtotal').innerText = formatCOP(subtotal);
+      document.getElementById('cart-op-costs').innerText = formatCOP(opCosts);
+      document.getElementById('cart-total').innerText = formatCOP(total);
+      document.getElementById('cart-total-letters').innerText = numeroALetras(total);
+
+      return { subtotal, opCosts, discount, total };
+    }
+
+    function resetSaleForm() {
+      cart = [];
+      renderCartTable();
+      document.getElementById('cust-name').value = '';
+      document.getElementById('cust-id').value = '';
+      document.getElementById('cust-phone').value = '';
+      document.getElementById('cust-address').value = '';
+      document.getElementById('cart-discount').value = 0;
+      document.getElementById('add-cost-mantenimiento').checked = false;
+      document.getElementById('add-cost-manilla').checked = false;
+      document.getElementById('add-cost-empaque').checked = false;
+      document.getElementById('add-cost-hilo').checked = false;
+      document.getElementById('sale-product-preview').classList.add('hidden');
+      calculateCartTotals();
+    }
+
+    function processCheckout() {
+      if (cart.length === 0) {
+        alert('Por favor agrega al menos una joya o balín a la orden.');
+        return;
+      }
+      const clientName = document.getElementById('cust-name').value.trim();
+      const clientPhone = document.getElementById('cust-phone').value.trim();
+      if (!clientName || !clientPhone) {
+        alert('Por favor ingresa el nombre y teléfono del cliente.');
+        return;
+      }
+
+      const saleType = document.getElementById('sale-type').value;
+      const { subtotal, opCosts, discount, total } = calculateCartTotals();
+
+      // Calcular Utilidad Directa
+      let costSum = cart.reduce((acc, curr) => acc + (curr.cost * curr.qty), 0);
+      let profit = Math.max(0, total - costSum);
+
+      const saleRecord = {
+        id: 'ALC-' + Math.floor(100000 + Math.random() * 900000),
+        date: new Date().toISOString(),
+        type: saleType,
+        paymentMethod: document.getElementById('sale-method').value,
+        client: {
+          name: clientName,
+          id: document.getElementById('cust-id').value.trim() || 'Sin Cédula',
+          phone: clientPhone,
+          address: document.getElementById('cust-address').value.trim() || 'Colombia'
+        },
+        items: [...cart],
+        subtotal,
+        opCosts,
+        discount,
+        total,
+        profit
+      };
+
+      // Si es Venta Contado o Crédito -> Descontar Inventario
+      if (saleType !== 'COTIZACION') {
+        cart.forEach(item => {
+          const p = appData.products.find(x => x.id === item.productId);
+          if (p) {
+            p.stock = Math.max(0, p.stock - item.qty);
+            if (p.stock === 0) p.status = 'Agotado';
+          }
+        });
+      }
+
+      // Guardar en Historial de Ventas
+      appData.sales.unshift(saleRecord);
+
+      // Si es Crédito -> Crear Registro en Cartera
+      if (saleType === 'CREDITO') {
+        const creditRecord = {
+          id: 'CRD-' + Math.floor(1000 + Math.random() * 9000),
+          saleId: saleRecord.id,
+          date: saleRecord.date,
+          client: saleRecord.client,
+          total,
+          paid: 0,
+          cuotas: Number(document.getElementById('sale-credit-cuotas').value) || 1,
+          dueDate: document.getElementById('sale-credit-due').value || '',
+          status: 'PENDIENTE',
+          abonos: [],
+          notes: `Generado desde venta ${saleRecord.id}`
+        };
+        appData.credits.unshift(creditRecord);
+        logActivity(`Venta a crédito otorgada a ${clientName} por ${formatCOP(total)}`);
+      } else {
+        logActivity(`${saleType} registrada para ${clientName} por valor de ${formatCOP(total)}`);
+      }
+
+      saveState();
+      renderInvoicePDF(saleRecord);
+      resetSaleForm();
+      updateDashboard();
+    }
+
+    /* ========================================================
+       5. FACTURACIÓN, REMISIÓN Y PDF / WHATSAPP
+       ======================================================== */
+    let currentInvoiceData = null;
+
+    function renderInvoicePDF(sale) {
+      currentInvoiceData = sale;
+      document.getElementById('doc-badge-type').innerText = sale.type.replace('_', ' ');
+      document.getElementById('doc-code').innerText = sale.id;
+      document.getElementById('doc-date').innerText = new Date(sale.date).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      document.getElementById('doc-cust-name').innerText = sale.client.name;
+      document.getElementById('doc-cust-id').innerText = sale.client.id;
+      document.getElementById('doc-cust-phone').innerText = sale.client.phone;
+      document.getElementById('doc-cust-address').innerText = sale.client.address;
+
+      const tbody = document.getElementById('doc-tbody');
+      tbody.innerHTML = '';
+
+      sale.items.forEach(item => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="py-1.5"><span class="font-bold">${item.name}</span> (${item.balin})</td>
+            <td class="py-1.5 text-center">${item.qty}</td>
+            <td class="py-1.5 text-right">${formatCOP(item.price)}</td>
+            <td class="py-1.5 text-right font-bold">${formatCOP(item.total)}</td>
+          </tr>
+        `;
+      });
+
+      if (sale.opCosts > 0) {
+        tbody.innerHTML += `
+          <tr class="text-gray-500 italic">
+            <td class="py-1.5">Mano de Obra / Tejido Artesanal / Empaque de Lujo</td>
+            <td class="py-1.5 text-center">1</td>
+            <td class="py-1.5 text-right">${formatCOP(sale.opCosts)}</td>
+            <td class="py-1.5 text-right">${formatCOP(sale.opCosts)}</td>
+          </tr>
+        `;
+      }
+
+      document.getElementById('doc-subtotal').innerText = formatCOP(sale.subtotal + sale.opCosts);
+      document.getElementById('doc-discount').innerText = formatCOP(sale.discount);
+      document.getElementById('doc-total').innerText = formatCOP(sale.total);
+      document.getElementById('doc-total-letters').innerText = numeroALetras(sale.total);
+
+      openModal('modal-invoice');
+    }
+
+    function shareInvoiceWhatsApp() {
+      if (!currentInvoiceData) return;
+      const s = currentInvoiceData;
+      let text = `✨ *JOYERÍA ALECAR - ORO 18K* ✨%0A`;
+      text += `Hola *${s.client.name}*, adjuntamos el detalle de tu *${s.type.replace('_', ' ')}*:%0A%0A`;
+      text += `📄 *Comprobante:* ${s.id}%0A`;
+      text += `🗓 *Fecha:* ${new Date(s.date).toLocaleDateString()}%0A`;
+      text += `💎 *Detalle de Joyas:*%0A`;
+      s.items.forEach(i => {
+        text += `• ${i.qty}x ${i.name} (${i.balin}) - ${formatCOP(i.total)}%0A`;
+      });
+      if (s.opCosts > 0) text += `• Confección / Empaque: ${formatCOP(s.opCosts)}%0A`;
+      text += `%0A💰 *TOTAL:* ${formatCOP(s.total)}%0A`;
+      text += `🌟 Garantía certificada de por vida en Oro 18K.%0A¡Gracias por confiar en el arte de Joyería Alecar!`;
+
+      const cleanPhone = s.client.phone.replace(/\D/g, '');
+      const url = `https://wa.me/57${cleanPhone}?text=${text}`;
+      window.open(url, '_blank');
+    }
+
+    /* ========================================================
+       6 & 7. MÓDULO DE CRÉDITOS Y ABONOS
+       ======================================================== */
+    function renderCreditsTable() {
+      const tbody = document.getElementById('credits-tbody');
+      tbody.innerHTML = '';
+
+      if (appData.credits.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-gray-500">No hay créditos activos en la cartera.</td></tr>';
+        return;
+      }
+
+      appData.credits.forEach(c => {
+        const balance = c.total - c.paid;
+        const progress = Math.min(100, Math.round((c.paid / c.total) * 100)) || 0;
+        const statusBadge = c.status === 'PAGADO' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                            c.paid > 0 ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-alecar-card/60 transition">
+            <td class="p-3">
+              <span class="font-mono font-bold text-alecar-gold">${c.id}</span>
+              <span class="text-[10px] text-gray-500 block">${new Date(c.date).toLocaleDateString()}</span>
+            </td>
+            <td class="p-3">
+              <div class="font-bold text-white">${c.client.name}</div>
+              <div class="text-[11px] text-gray-400">CC: ${c.client.id}</div>
+            </td>
+            <td class="p-3 font-mono text-xs text-gray-300">${c.client.phone}</td>
+            <td class="p-3 text-right font-mono font-bold text-white">${formatCOP(c.total)}</td>
+            <td class="p-3 text-right font-mono text-emerald-400">${formatCOP(c.paid)}</td>
+            <td class="p-3 text-right font-mono font-bold text-rose-400">${formatCOP(balance)}</td>
+            <td class="p-3 text-center">
+              <div class="w-20 bg-gray-800 rounded-full h-2 mx-auto overflow-hidden">
+                <div class="bg-alecar-gold h-2 rounded-full" style="width: ${progress}%"></div>
+              </div>
+              <span class="text-[10px] text-gray-400 mt-1 block">${progress}%</span>
+            </td>
+            <td class="p-3 text-center">
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold border ${statusBadge}">${c.status}</span>
+            </td>
+            <td class="p-3 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="openAbonoModal('${c.id}')" title="Registrar Abono" class="px-2.5 py-1 rounded bg-alecar-gold/20 hover:bg-alecar-gold/30 text-alecar-gold text-xs font-bold border border-alecar-gold/30">
+                  + Abono
+                </button>
+                <button onclick="sendDebtReminderWhatsApp('${c.id}')" title="Recordatorio WhatsApp" class="p-1 rounded bg-emerald-600/20 text-emerald-400 hover:text-emerald-300 border border-emerald-600/30">
+                  <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function openAbonoModal(creditId) {
+      const c = appData.credits.find(x => x.id === creditId);
+      if (!c) return;
+      document.getElementById('abono-credit-id').value = c.id;
+      document.getElementById('abono-modal-client').innerText = c.client.name;
+      document.getElementById('abono-modal-total').innerText = formatCOP(c.total);
+      document.getElementById('abono-modal-balance').innerText = formatCOP(c.total - c.paid);
+      document.getElementById('abono-amount').value = '';
+      document.getElementById('abono-note').value = '';
+      openModal('modal-abono');
+    }
+
+    function saveAbono() {
+      const creditId = document.getElementById('abono-credit-id').value;
+      const amount = Number(document.getElementById('abono-amount').value);
+      if (!amount || amount <= 0) { alert('Monto inválido'); return; }
+
+      const c = appData.credits.find(x => x.id === creditId);
+      if (!c) return;
+
+      const balance = c.total - c.paid;
+      if (amount > balance) {
+        alert(`El abono supera el saldo adeudado (${formatCOP(balance)})`);
+        return;
+      }
+
+      c.paid += amount;
+      c.abonos.push({
+        date: new Date().toISOString(),
+        amount,
+        method: document.getElementById('abono-method').value,
+        note: document.getElementById('abono-note').value
+      });
+
+      if (c.paid >= c.total) {
+        c.status = 'PAGADO';
+      } else {
+        c.status = 'PARCIAL';
+      }
+
+      logActivity(`Abono de ${formatCOP(amount)} recibido de ${c.client.name}`);
+      saveState();
+      closeModal('modal-abono');
+      renderCreditsTable();
+      updateDashboard();
+    }
+
+    function openManualCreditModal() {
+      document.getElementById('mc-name').value = '';
+      document.getElementById('mc-id').value = '';
+      document.getElementById('mc-phone').value = '';
+      document.getElementById('mc-total').value = '';
+      document.getElementById('mc-notes').value = '';
+      openModal('modal-manual-credit');
+    }
+
+    function saveManualCredit() {
+      const name = document.getElementById('mc-name').value.trim();
+      const phone = document.getElementById('mc-phone').value.trim();
+      const total = Number(document.getElementById('mc-total').value);
+
+      if (!name || !phone || !total) {
+        alert('Por favor completa el nombre, teléfono y monto de la deuda.');
+        return;
+      }
+
+      const creditRecord = {
+        id: 'CRD-' + Math.floor(1000 + Math.random() * 9000),
+        saleId: 'MANUAL',
+        date: new Date().toISOString(),
+        client: {
+          name,
+          id: document.getElementById('mc-id').value.trim() || 'Sin Cédula',
+          phone,
+          address: 'No registrada'
+        },
+        total,
+        paid: 0,
+        cuotas: 1,
+        dueDate: document.getElementById('mc-due').value || '',
+        status: 'PENDIENTE',
+        abonos: [],
+        notes: document.getElementById('mc-notes').value.trim() || 'Deuda histórica agregada'
+      };
+
+      appData.credits.unshift(creditRecord);
+      logActivity(`Crédito manual cargado a ${name} por ${formatCOP(total)}`);
+      saveState();
+      closeModal('modal-manual-credit');
+      renderCreditsTable();
+      updateDashboard();
+    }
+
+    function sendDebtReminderWhatsApp(creditId) {
+      const c = appData.credits.find(x => x.id === creditId);
+      if (!c) return;
+      const balance = c.total - c.paid;
+      let text = `💎 *JOYERÍA ALECAR - ESTADO DE CUENTA* 💎%0A`;
+      text += `Estimado(a) *${c.client.name}*, le compartimos el estado de su crédito artesanal:%0A%0A`;
+      text += `• Total Crédito: ${formatCOP(c.total)}%0A`;
+      text += `• Total Abonado: ${formatCOP(c.paid)}%0A`;
+      text += `• *Saldo Pendiente:* ${formatCOP(balance)}%0A`;
+      if (c.dueDate) text += `• Fecha Límite de Pago: ${c.dueDate}%0A`;
+      text += `%0APuede realizar su pago por Nequi o Daviplata a este número. ¡Muchas gracias por su preferencia!`;
+
+      const cleanPhone = c.client.phone.replace(/\D/g, '');
+      const url = `https://wa.me/57${cleanPhone}?text=${text}`;
+      window.open(url, '_blank');
+    }
+
+    /* ========================================================
+       8. REPORTES CONTABLES Y EXPORTACIÓN A EXCEL
+       ======================================================== */
+    let currentReportData = [];
+
+    function runFinancialReport() {
+      const period = document.getElementById('rep-filter-period').value;
+      const type = document.getElementById('rep-filter-type').value;
+      const thead = document.getElementById('report-thead');
+      const tbody = document.getElementById('report-tbody');
+
+      tbody.innerHTML = '';
+      currentReportData = [];
+
+      if (type === 'ventas') {
+        document.getElementById('report-title').innerText = 'Reporte Detallado de Ventas y Utilidad Real';
+        thead.innerHTML = `
+          <tr>
+            <th class="py-2">Código / Fecha</th>
+            <th class="py-2">Cliente</th>
+            <th class="py-2">Tipo / Pago</th>
+            <th class="py-2 text-right">Subtotal</th>
+            <th class="py-2 text-right">Total Venta</th>
+            <th class="py-2 text-right">Utilidad Neta</th>
+          </tr>
+        `;
+
+        let totalS = 0, totalP = 0;
+        appData.sales.forEach(s => {
+          totalS += s.total;
+          totalP += (s.profit || 0);
+          currentReportData.push({
+            Codigo: s.id,
+            Fecha: s.date.split('T')[0],
+            Cliente: s.client.name,
+            Tipo: s.type,
+            Metodo: s.paymentMethod,
+            Subtotal: s.subtotal,
+            Total: s.total,
+            Utilidad: s.profit || 0
+          });
+
+          tbody.innerHTML += `
+            <tr>
+              <td class="py-2 font-mono text-alecar-gold">${s.id}<br><span class="text-[10px] text-gray-500">${s.date.split('T')[0]}</span></td>
+              <td class="py-2 font-medium text-white">${s.client.name}</td>
+              <td class="py-2 text-gray-400">${s.type} (${s.paymentMethod})</td>
+              <td class="py-2 text-right font-mono">${formatCOP(s.subtotal)}</td>
+              <td class="py-2 text-right font-mono font-bold text-white">${formatCOP(s.total)}</td>
+              <td class="py-2 text-right font-mono text-emerald-400 font-bold">${formatCOP(s.profit)}</td>
+            </tr>
+          `;
+        });
+        document.getElementById('report-summary-badge').innerText = `Ventas: ${formatCOP(totalS)} | Ganancia: ${formatCOP(totalP)}`;
+      } else if (type === 'inventario') {
+        document.getElementById('report-title').innerText = 'Reporte de Existencias y Avalúo de Stock';
+        thead.innerHTML = `
+          <tr>
+            <th class="py-2">Código</th>
+            <th class="py-2">Joya / Balín</th>
+            <th class="py-2 text-center">Stock</th>
+            <th class="py-2 text-right">Costo Unit.</th>
+            <th class="py-2 text-right">Venta Unit.</th>
+            <th class="py-2 text-right">Valor Total Stock</th>
+          </tr>
+        `;
+        let sumVal = 0;
+        appData.products.forEach(p => {
+          const rowVal = p.price * p.stock;
+          sumVal += rowVal;
+          currentReportData.push({
+            Codigo: p.code,
+            Nombre: p.name,
+            Balin: p.balin,
+            Stock: p.stock,
+            Costo: p.cost,
+            Precio: p.price,
+            TotalInventario: rowVal
+          });
+          tbody.innerHTML += `
+            <tr>
+              <td class="py-2 font-mono text-alecar-gold">${p.code}</td>
+              <td class="py-2 font-medium text-white">${p.name} (${p.balin})</td>
+              <td class="py-2 text-center font-bold text-white">${p.stock}</td>
+              <td class="py-2 text-right font-mono">${formatCOP(p.cost)}</td>
+              <td class="py-2 text-right font-mono">${formatCOP(p.price)}</td>
+              <td class="py-2 text-right font-mono font-bold text-alecar-goldLight">${formatCOP(rowVal)}</td>
+            </tr>
+          `;
+        });
+        document.getElementById('report-summary-badge').innerText = `Valorización Total: ${formatCOP(sumVal)}`;
+      } else if (type === 'creditos') {
+        document.getElementById('report-title').innerText = 'Reporte de Cartera por Cobrar';
+        thead.innerHTML = `
+          <tr>
+            <th class="py-2">ID</th>
+            <th class="py-2">Cliente</th>
+            <th class="py-2 text-right">Total</th>
+            <th class="py-2 text-right">Abonado</th>
+            <th class="py-2 text-right">Saldo</th>
+            <th class="py-2 text-center">Estado</th>
+          </tr>
+        `;
+        let totalDebt = 0;
+        appData.credits.forEach(c => {
+          const saldo = c.total - c.paid;
+          totalDebt += saldo;
+          currentReportData.push({
+            ID: c.id,
+            Cliente: c.client.name,
+            Telefono: c.client.phone,
+            TotalCredito: c.total,
+            Abonado: c.paid,
+            Saldo: saldo,
+            Estado: c.status
+          });
+          tbody.innerHTML += `
+            <tr>
+              <td class="py-2 font-mono text-alecar-gold">${c.id}</td>
+              <td class="py-2 text-white font-medium">${c.client.name}</td>
+              <td class="py-2 text-right font-mono">${formatCOP(c.total)}</td>
+              <td class="py-2 text-right font-mono text-emerald-400">${formatCOP(c.paid)}</td>
+              <td class="py-2 text-right font-mono font-bold text-rose-400">${formatCOP(saldo)}</td>
+              <td class="py-2 text-center text-xs">${c.status}</td>
+            </tr>
+          `;
+        });
+        document.getElementById('report-summary-badge').innerText = `Total en Cartera: ${formatCOP(totalDebt)}`;
+      }
+    }
+
+    function exportCurrentReportExcel() {
+      if (currentReportData.length === 0) { alert('No hay datos para exportar.'); return; }
+      const ws = XLSX.utils.json_to_sheet(currentReportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Informe');
+      XLSX.writeFile(wb, `Alecar_Reporte_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    function exportInventoryExcel() {
+      const data = appData.products.map(p => ({
+        Codigo: p.code,
+        Nombre: p.name,
+        Balin: p.balin,
+        Material: p.material,
+        Stock: p.stock,
+        Unidad: p.unit,
+        CostoCompra: p.cost,
+        PrecioVenta: p.price,
+        MargenPorcentaje: p.margin,
+        Estado: p.status
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
+      XLSX.writeFile(wb, `Inventario_Joyeria_Alecar_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    /* ========================================================
+       9. SEGURIDAD, BACKUP & ACTIVIDAD
+       ======================================================== */
+    function renderLogs() {
+      const container = document.getElementById('logs-container');
+      container.innerHTML = '';
+      appData.logs.forEach(log => {
+        container.innerHTML += `
+          <div class="p-2.5 rounded-lg bg-black/40 border border-alecar-border flex justify-between gap-4">
+            <span>${log.text}</span>
+            <span class="text-gray-500 whitespace-nowrap text-[10px]">${new Date(log.date).toLocaleString()}</span>
+          </div>
+        `;
+      });
+    }
+
+    function clearActivityLogs() {
+      if (confirm('¿Vaciar historial de logs?')) {
+        appData.logs = [{ date: new Date().toISOString(), text: 'Historial reiniciado por el Administrador.' }];
+        saveState();
+        renderLogs();
+      }
+    }
+
+    function exportFullBackup() {
+      const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Backup_Joyeria_Alecar_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+    }
+
+    function applyUserRole() {
+      const name = document.getElementById('auth-username').value.trim();
+      const role = document.getElementById('auth-role').value;
+      appData.user = { name, role };
+      document.getElementById('header-user-name').innerText = name;
+      document.getElementById('header-user-role').innerText = role;
+      saveState();
+      closeModal('modal-auth');
+      logActivity(`Sesión iniciada por ${name} (${role})`);
+    }
+
+    /* ========================================================
+       UTILIDAD: CONVERSOR DE NÚMEROS A LETRAS (PESOS)
+       ======================================================== */
+    function numeroALetras(num) {
+      if (!num || num === 0) return 'Cero pesos m/cte';
+      const unidades = ['', 'un', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+      const decenas = ['', 'diez', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+      const especiales = { 11: 'once', 12: 'doce', 13: 'trece', 14: 'catorce', 15: 'quince', 16: 'dieciséis', 17: 'diecisiete', 18: 'dieciocho', 19: 'diecinueve', 21: 'veintiún', 22: 'veintidós', 23: 'veintitrés', 24: 'veinticuatro', 25: 'veinticinco', 26: 'veintiséis', 27: 'veintisiete', 28: 'veintiocho', 29: 'veintinueve' };
+      const centenas = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+
+      function convertirSeccion(n) {
+        let output = '';
+        if (n === 100) return 'cien';
+        if (n > 99) { output += centenas[Math.floor(n / 100)] + ' '; n %= 100; }
+        if (n >= 11 && n <= 29 && especiales[n]) { return output + especiales[n]; }
+        if (n >= 10) { output += decenas[Math.floor(n / 10)] + ' '; n %= 10; if (n > 0) output += 'y '; }
+        if (n > 0) output += unidades[n];
+        return output.trim();
+      }
+
+      let millones = Math.floor(num / 1000000);
+      let miles = Math.floor((num % 1000000) / 1000);
+      let resto = Math.floor(num % 1000);
+      let resultado = '';
+
+      if (millones > 0) resultado += (millones === 1 ? 'un millón ' : convertirSeccion(millones) + ' millones ');
+      if (miles > 0) resultado += (miles === 1 ? 'mil ' : convertirSeccion(miles) + ' mil ');
+      if (resto > 0) resultado += convertirSeccion(resto);
+
+      return (resultado.trim() + ' pesos m/cte').toUpperCase();
+    }
+
+    // Arranque Automático
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('header-user-name').innerText = appData.user.name;
+      document.getElementById('header-user-role').innerText = appData.user.role;
+      updateDashboard();
+      prepareSalesModule();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
